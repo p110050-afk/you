@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>放置型資源收集遊戲</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+        
+        .stats {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            font-size: 1.2em;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+            font-size: 1.3em;
+        }
+        
+        .click-area {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .click-button {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            color: white;
+            font-size: 1.5em;
+            padding: 40px 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 30px rgba(245, 87, 108, 0.4);
+        }
+        
+        .click-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 40px rgba(245, 87, 108, 0.6);
+        }
+        
+        .click-button:active {
+            transform: scale(0.95);
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .tab {
+            padding: 15px 30px;
+            background: transparent;
+            border: none;
+            color: #667eea;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid #667eea;
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .upgrades {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .upgrade-card {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 15px;
+            transition: all 0.3s;
+        }
+        
+        .upgrade-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .upgrade-title {
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .upgrade-info {
+            color: #666;
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+        
+        .upgrade-button {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+        
+        .upgrade-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .upgrade-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .multiplier-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            color: white;
+        }
+        
+        .multiplier-card .upgrade-title {
+            color: white;
+        }
+        
+        .multiplier-card .upgrade-info {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .multiplier-card .upgrade-button {
+            background: white;
+            color: #f5576c;
+        }
+        
+        .floating-number {
+            position: fixed;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #f5576c;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px);
+            }
+        }
+        
+        .achievement-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(34, 197, 94, 0.4);
+            animation: slideIn 0.5s ease-out;
+            z-index: 1000;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>⛏️ 資源帝國 ⛏️</h1>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <span>💎 金幣：</span>
+                <span class="stat-value" id="coins">0</span>
+            </div>
+            <div class="stat-item">
+                <span>⚡ 每秒收益：</span>
+                <span class="stat-value" id="perSecond">0</span>
+            </div>
+            <div class="stat-item">
+                <span>👆 點擊力量：</span>
+                <span class="stat-value" id="clickPower">1</span>
+            </div>
+            <div class="stat-item">
+                <span>🎯 總倍率：</span>
+                <span class="stat-value" id="totalMultiplier">×1</span>
+            </div>
+        </div>
+        
+        <div class="click-area">
+            <button class="click-button" id="clickBtn">💰<br>點我</button>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" data-tab="buildings">🏢 建築</button>
+            <button class="tab" data-tab="multipliers">⚡ 倍率升級</button>
+            <button class="tab" data-tab="click">👆 點擊升級</button>
+        </div>
+        
+        <div id="buildings" class="tab-content active">
+            <h2 style="color: #667eea; margin-bottom: 15px;">生產建築</h2>
+            <div class="upgrades" id="buildingsContainer"></div>
+        </div>
+        
+        <div id="multipliers" class="tab-content">
+            <h2 style="color: #667eea; margin-bottom: 15px;">全局倍率提升</h2>
+            <div class="upgrades" id="multipliersContainer"></div>
+        </div>
+        
+        <div id="click" class="tab-content">
+            <h2 style="color: #667eea; margin-bottom: 15px;">點擊力量提升</h2>
+            <div class="upgrades" id="clickContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        let coins = 0;
+        let clickPower = 1;
+        let coinsPerSecond = 0;
+        let globalMultiplier = 1;
+        
+        const buildings = [
+            {
+                id: 'cursor',
+                name: '🖱️ 自動點擊器',
+                description: '自動為你點擊賺錢',
+                baseProduction: 0.1,
+                baseCost: 15,
+                owned: 0,
+                costMultiplier: 1.15
+            },
+            {
+                id: 'miner',
+                name: '⛏️ 礦工',
+                description: '挖掘金礦賺取財富',
+                baseProduction: 1,
+                baseCost: 100,
+                owned: 0,
+                costMultiplier: 1.15
+            },
+            {
+                id: 'factory',
+                name: '🏭 工廠',
+                description: '大規模生產金幣',
+                baseProduction: 8,
+                baseCost: 1100,
+                owned: 0,
+                costMultiplier: 1.15
+            },
+            {
+                id: 'mine',
+                name: '🏔️ 礦山',
+                description: '巨大的礦脈產出',
+                baseProduction: 47,
+                baseCost: 12000,
+                owned: 0,
+                costMultiplier: 1.15
+            },
+            {
+                id: 'bank',
+                name: '🏦 銀行',
+                description: '金錢生錢的魔法',
+                baseProduction: 260,
+                baseCost: 130000,
+                owned: 0,
+                costMultiplier: 1.15
+            },
+            {
+                id: 'temple',
+                name: '⛩️ 神殿',
+                description: '神秘的財富祝福',
+                baseProduction: 1400,
+                baseCost: 1400000,
+                owned: 0,
+                costMultiplier: 1.15
+            },
+            {
+                id: 'wizard',
+                name: '🧙 煉金術師',
+                description: '將石頭變成黃金',
+                baseProduction: 7800,
+                baseCost: 20000000,
+                owned: 0,
+                costMultiplier: 1.15
+            },
+            {
+                id: 'portal',
+                name: '🌀 次元門',
+                description: '從其他世界獲取財富',
+                baseProduction: 44000,
+                baseCost: 330000000,
+                owned: 0,
+                costMultiplier: 1.15
+            },
+            {
+                id: 'timemachine',
+                name: '⏰ 時光機',
+                description: '穿越時空累積財富',
+                baseProduction: 260000,
+                baseCost: 5100000000,
+                owned: 0,
+                costMultiplier: 1.15
+            },
+            {
+                id: 'antimatter',
+                name: '⚛️ 反物質',
+                description: '量子級別的財富生成',
+                baseProduction: 1600000,
+                baseCost: 75000000000,
+                owned: 0,
+                costMultiplier: 1.15
+            }
+        ];
+        
+        const multipliers = [
+            {
+                id: 'mult1',
+                name: '📈 效率提升 I',
+                description: '所有產出 ×2',
+                multiplier: 2,
+                cost: 1000,
+                owned: false
+            },
+            {
+                id: 'mult2',
+                name: '📈 效率提升 II',
+                description: '所有產出 ×2',
+                multiplier: 2,
+                cost: 50000,
+                owned: false
+            },
+            {
+                id: 'mult3',
+                name: '📈 效率提升 III',
+                description: '所有產出 ×2',
+                multiplier: 2,
+                cost: 1000000,
+                owned: false
+            },
+            {
+                id: 'mult4',
+                name: '📈 效率提升 IV',
+                description: '所有產出 ×3',
+                multiplier: 3,
+                cost: 100000000,
+                owned: false
+            },
+            {
+                id: 'mult5',
+                name: '🌟 黃金時代',
+                description: '所有產出 ×5',
+                multiplier: 5,
+                cost: 10000000000,
+                owned: false
+            },
+            {
+                id: 'mult6',
+                name: '💫 超級加倍',
+                description: '所有產出 ×10',
+                multiplier: 10,
+                cost: 1000000000000,
+                owned: false
+            }
+        ];
+        
+        const clickUpgrades = [
+            {
+                id: 'click1',
+                name: '💪 更強的手指',
+                description: '點擊力量 +1',
+                power: 1,
+                cost: 100,
+                owned: 0
+            },
+            {
+                id: 'click2',
+                name: '🖐️ 雙手點擊',
+                description: '點擊力量 +5',
+                power: 5,
+                cost: 500,
+                owned: 0
+            },
+            {
+                id: 'click3',
+                name: '🦾 機械手臂',
+                description: '點擊力量 +25',
+                power: 25,
+                cost: 10000,
+                owned: 0
+            },
+            {
+                id: 'click4',
+                name: '⚡ 超級點擊',
+                description: '點擊力量 +100',
+                power: 100,
+                cost: 100000,
+                owned: 0
+            },
+            {
+                id: 'click5',
+                name: '🌪️ 點擊風暴',
+                description: '點擊力量 +500',
+                power: 500,
+                cost: 10000000,
+                owned: 0
+            },
+            {
+                id: 'click6',
+                name: '💥 終極一擊',
+                description: '點擊力量 +2500',
+                power: 2500,
+                cost: 1000000000,
+                owned: 0
+            }
+        ];
+        
+        const clickBtn = document.getElementById('clickBtn');
+        const coinsDisplay = document.getElementById('coins');
+        const perSecondDisplay = document.getElementById('perSecond');
+        const clickPowerDisplay = document.getElementById('clickPower');
+        const totalMultiplierDisplay = document.getElementById('totalMultiplier');
+        
+        function updateDisplay() {
+            coinsDisplay.textContent = formatNumber(Math.floor(coins));
+            perSecondDisplay.textContent = formatNumber(coinsPerSecond);
+            clickPowerDisplay.textContent = formatNumber(clickPower);
+            totalMultiplierDisplay.textContent = '×' + globalMultiplier;
+        }
+        
+        function formatNumber(num) {
+            if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
+            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+            if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+            return num.toFixed(1);
+        }
+        
+        function calculateCoinsPerSecond() {
+            coinsPerSecond = 0;
+            buildings.forEach(building => {
+                coinsPerSecond += building.baseProduction * building.owned * globalMultiplier;
+            });
+        }
+        
+        function calculateGlobalMultiplier() {
+            globalMultiplier = 1;
+            multipliers.forEach(mult => {
+                if (mult.owned) {
+                    globalMultiplier *= mult.multiplier;
+                }
+            });
+        }
+        
+        function calculateClickPower() {
+            clickPower = 1;
+            clickUpgrades.forEach(upgrade => {
+                clickPower += upgrade.power * upgrade.owned;
+            });
+        }
+        
+        function getCost(item) {
+            if (item.costMultiplier) {
+                return Math.floor(item.baseCost * Math.pow(item.costMultiplier, item.owned));
+            }
+            return item.cost;
+        }
+        
+        function createFloatingNumber(x, y, value) {
+            const floatingNum = document.createElement('div');
+            floatingNum.className = 'floating-number';
+            floatingNum.textContent = '+' + formatNumber(value);
+            floatingNum.style.left = x + 'px';
+            floatingNum.style.top = y + 'px';
+            document.body.appendChild(floatingNum);
+            
+            setTimeout(() => {
+                floatingNum.remove();
+            }, 1000);
+        }
+        
+        function showAchievement(title) {
+            const notif = document.createElement('div');
+            notif.className = 'achievement-notification';
+            notif.innerHTML = `<strong>🎉 成就解鎖！</strong><br>${title}`;
+            document.body.appendChild(notif);
+            
+            setTimeout(() => {
+                notif.remove();
+            }, 3000);
+        }
+        
+        clickBtn.addEventListener('click', (e) => {
+            const earned = clickPower * globalMultiplier;
+            coins += earned;
+            updateDisplay();
+            updateAllUpgrades();
+            createFloatingNumber(e.clientX, e.clientY, earned);
+        });
+        
+        function buyBuilding(building) {
+            const cost = getCost(building);
+            if (coins >= cost) {
+                coins -= cost;
+                building.owned++;
+                calculateCoinsPerSecond();
+                updateDisplay();
+                updateAllUpgrades();
+                
+                if (building.owned === 1) {
+                    showAchievement(`首次購買${building.name}！`);
+                }
+            }
+        }
+        
+        function buyMultiplier(multiplier) {
+            if (coins >= multiplier.cost && !multiplier.owned) {
+                coins -= multiplier.cost;
+                multiplier.owned = true;
+                calculateGlobalMultiplier();
+                calculateCoinsPerSecond();
+                updateDisplay();
+                updateAllUpgrades();
+                showAchievement(`獲得${multiplier.name}！`);
+            }
+        }
+        
+        function buyClickUpgrade(upgrade) {
+            const cost = upgrade.cost * (upgrade.owned + 1);
+            if (coins >= cost) {
+                coins -= cost;
+                upgrade.owned++;
+                calculateClickPower();
+                updateDisplay();
+                updateAllUpgrades();
+            }
+        }
+        
+        function createBuildingCard(building) {
+            const card = document.createElement('div');
+            card.className = 'upgrade-card';
+            card.innerHTML = `
+                <div class="upgrade-title">${building.name}</div>
+                <div class="upgrade-info">${building.description}</div>
+                <div class="upgrade-info">擁有：<strong>${building.owned}</strong></div>
+                <div class="upgrade-info">每秒產出：<strong>${formatNumber(building.baseProduction * building.owned * globalMultiplier)}</strong></div>
+                <button class="upgrade-button" data-id="${building.id}">
+                    購買 - ${formatNumber(getCost(building))} 金幣
+                </button>
+            `;
+            
+            const button = card.querySelector('.upgrade-button');
+            button.addEventListener('click', () => buyBuilding(building));
+            button.disabled = coins < getCost(building);
+            
+            return card;
+        }
+        
+        function createMultiplierCard(multiplier) {
+            const card = document.createElement('div');
+            card.className = 'upgrade-card multiplier-card';
+            card.innerHTML = `
+                <div class="upgrade-title">${multiplier.name}</div>
+                <div class="upgrade-info">${multiplier.description}</div>
+                <div class="upgrade-info">${multiplier.owned ? '✅ 已購買' : '🔒 未購買'}</div>
+                <button class="upgrade-button" data-id="${multiplier.id}">
+                    ${multiplier.owned ? '已擁有' : '購買 - ' + formatNumber(multiplier.cost) + ' 金幣'}
+                </button>
+            `;
+            
+            const button = card.querySelector('.upgrade-button');
+            if (!multiplier.owned) {
+                button.addEventListener('click', () => buyMultiplier(multiplier));
+                button.disabled = coins < multiplier.cost;
+            } else {
+                button.disabled = true;
+            }
+            
+            return card;
+        }
+        
+        function createClickCard(upgrade) {
+            const card = document.createElement('div');
+            card.className = 'upgrade-card';
+            const nextCost = upgrade.cost * (upgrade.owned + 1);
+            card.innerHTML = `
+                <div class="upgrade-title">${upgrade.name}</div>
+                <div class="upgrade-info">${upgrade.description}</div>
+                <div class="upgrade-info">擁有：<strong>${upgrade.owned}</strong></div>
+                <div class="upgrade-info">總加成：<strong>+${upgrade.power * upgrade.owned}</strong></div>
+                <button class="upgrade-button" data-id="${upgrade.id}">
+                    購買 - ${formatNumber(nextCost)} 金幣
+                </button>
+            `;
+            
+            const button = card.querySelector('.upgrade-button');
+            button.addEventListener('click', () => buyClickUpgrade(upgrade));
+            button.disabled = coins < nextCost;
+            
+            return card;
+        }
+        
+        function updateAllUpgrades() {
+            const buildingsContainer = document.getElementById('buildingsContainer');
+            const multipliersContainer = document.getElementById('multipliersContainer');
+            const clickContainer = document.getElementById('clickContainer');
+            
+            buildingsContainer.innerHTML = '';
+            buildings.forEach(building => {
+                buildingsContainer.appendChild(createBuildingCard(building));
+            });
+            
+            multipliersContainer.innerHTML = '';
+            multipliers.forEach(multiplier => {
+                multipliersContainer.appendChild(createMultiplierCard(multiplier));
+            });
+            
+            clickContainer.innerHTML = '';
+            clickUpgrades.forEach(upgrade => {
+                clickContainer.appendChild(createClickCard(upgrade));
+            });
+        }
+        
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+        
+        setInterval(() => {
+            coins += coinsPerSecond / 10;
+            updateDisplay();
+            updateAllUpgrades();
+        }, 100);
+        
+        updateDisplay();
+        updateAllUpgrades();
+    </script>
+</body>
+</html>
